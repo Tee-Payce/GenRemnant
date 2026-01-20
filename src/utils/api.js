@@ -25,24 +25,16 @@ export const authAPI = {
   },
 
   getMe: async (token) => {
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/auth/me`, { method: 'GET', headers });
     return response.json();
   },
 
   logout: async (token) => {
-    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', headers });
     return response.json();
   },
 };
@@ -57,39 +49,28 @@ export const commentsAPI = {
   },
 
   createComment: async (postId, text, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/comments`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ postId, text }),
-    });
-    if (!response.ok) throw new Error('Failed to create comment');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/comments`, { method: 'POST', headers, body: JSON.stringify({ postId, text }) });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(errorData.message || `HTTP ${response.status}: Failed to create comment`);
+    }
     return response.json();
   },
 
   deleteComment: async (commentId, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, { method: 'DELETE', headers });
     if (!response.ok) throw new Error('Failed to delete comment');
     return response.json();
   },
 
   updateComment: async (commentId, text, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text }),
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, { method: 'PUT', headers, body: JSON.stringify({ text }) });
     if (!response.ok) throw new Error('Failed to update comment');
     return response.json();
   },
@@ -105,39 +86,29 @@ export const reactionsAPI = {
   },
 
   getUserReaction: async (postId, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/reactions/user/${postId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/reactions/user/${postId}`, { method: 'GET', headers });
     const json = await response.json();
     if (!response.ok) throw new Error(json?.message || 'Failed to fetch user reaction');
     return json;
   },
 
   addReaction: async (postId, reactionType, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/reactions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ postId, reactionType }),
-    });
-    if (!response.ok) throw new Error('Failed to add reaction');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/reactions`, { method: 'POST', headers, body: JSON.stringify({ postId, reactionType }) });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(errorData.message || `HTTP ${response.status}: Failed to add reaction`);
+    }
     return response.json();
   },
 
   removeReaction: async (postId, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/reactions/${postId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/reactions/${postId}`, { method: 'DELETE', headers });
     if (!response.ok) throw new Error('Failed to remove reaction');
     return response.json();
   },
@@ -146,80 +117,52 @@ export const reactionsAPI = {
 // Admin
 export const adminAPI = {
   getStats: async (token) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/admin/stats`, { method: 'GET', headers });
     return response.json();
   },
 
   getUsers: async (token) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/admin/users`, { method: 'GET', headers });
     return response.json();
   },
 
   getComments: async (token) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/comments`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/admin/comments`, { method: 'GET', headers });
     return response.json();
   },
 
   getReactions: async (token) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/reactions`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/admin/reactions`, { method: 'GET', headers });
     return response.json();
   },
 
   deleteUser: async (userId, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, { method: 'DELETE', headers });
     if (!response.ok) throw new Error('Failed to delete user');
     return response.json();
   },
 
   deleteComment: async (commentId, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/comments/${commentId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/admin/comments/${commentId}`, { method: 'DELETE', headers });
     if (!response.ok) throw new Error('Failed to delete comment');
     return response.json();
   },
   approveUser: async (userId, token) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/approve`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/approve`, { method: 'PUT', headers });
     if (!response.ok) throw new Error('Failed to approve user');
     return response.json();
   },

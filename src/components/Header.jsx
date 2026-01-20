@@ -1,117 +1,148 @@
-import React, { useState, useEffect } from "react";
-import { getToken, clearToken } from "../utils/auth";
-import { authAPI } from "../utils/api";
-import { AuthModal } from "./AuthModal";
-import { Moon, Sun } from "lucide-react";
+import React, { useState } from "react";
+import { Moon, Sun, Menu, X, LogOut } from "lucide-react";
+import { motion } from "framer-motion";
+import "../styles/Header.css";
 
-export function Header({ view, setView, user, setUser, darkMode, setDarkMode }) {
-  const [loading, setLoading] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+export function Header({
+  user,
+  currentPage,
+  setCurrentPage,
+  onAuthClick,
+  onLogout,
+  darkMode,
+  setDarkMode,
+}) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const token = getToken();
-    if (token && !user) {
-      fetchUser(token);
-    }
-  }, [user]);
-
-  const fetchUser = async (token) => {
-    try {
-      setLoading(true);
-      const userData = await authAPI.getMe(token);
-      setUser(userData);
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      clearToken();
-    } finally {
-      setLoading(false);
-    }
+  const handleNavClick = (page) => {
+    setCurrentPage(page);
+    setIsMenuOpen(false);
   };
 
-  const handleLogout = async () => {
-    const token = getToken();
-    if (token) {
-      try {
-        await authAPI.logout(token);
-      } catch (error) {
-        console.error('Logout error:', error);
+  const getNavItems = () => {
+    const items = [
+      { id: "landing", label: "Home", icon: "🏠" },
+    ];
+
+    if (user) {
+      if (["contributor", "admin"].includes(user.role)) {
+        items.push({ id: "create-post", label: "Create Post", icon: "✍️" });
+      }
+      if (user.role === "admin") {
+        items.push({ id: "admin", label: "Dashboard", icon: "⚙️" });
       }
     }
-    clearToken();
-    setUser(null);
-  };
 
-  const handleAuthSuccess = (userData) => {
-    setUser(userData);
+    return items;
   };
 
   return (
-    <>
-      <header className="backdrop-blur-sm sticky top-0 z-30 bg-white/60 border-b border-slate-200">
-        <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center shadow-md">
-              <span className="font-extrabold text-white">GR</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">Generation Remnant</h1>
-              <p className="text-xs text-slate-500">Sermons • Devotionals • Daily Reminders</p>
-            </div>
-          </div>
+    <header className="header">
+      <motion.div
+        className="header-container"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        {/* Logo */}
+        <div className="header-logo">
+          <button
+            onClick={() => handleNavClick("landing")}
+            className="logo-btn"
+          >
+            <span className="logo-text">GenRemnant</span>
+          </button>
+        </div>
 
-          <nav className="flex items-center gap-3">
-            <button 
-          onClick={() => setDarkMode(!darkMode)} 
-          className="ml-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700"
-        >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
+        {/* Desktop Navigation */}
+        <nav className="header-nav desktop-nav">
+          {getNavItems().map((item) => (
             <button
-              onClick={() => setView("visit")}
-              className={`px-3 py-2 rounded-md text-sm ${view === "visit" ? "bg-amber-50 ring-1 ring-amber-200" : "hover:bg-slate-50"}`}
+              key={item.id}
+              onClick={() => handleNavClick(item.id)}
+              className={`nav-item ${currentPage === item.id ? "active" : ""}`}
             >
-              Visit
+              {item.icon} {item.label}
             </button>
-            <button
-              onClick={() => setView("admin")}
-              className={`px-3 py-2 rounded-md text-sm ${view === "admin" ? "bg-rose-50 ring-1 ring-rose-200" : "hover:bg-slate-50"} ${!user?.isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={!user?.isAdmin}
-            >
-              Admin
-            </button>
+          ))}
+        </nav>
 
-            {loading ? (
-              <span className="text-sm text-slate-500">Loading...</span>
-            ) : user ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium hidden sm:inline">{user.displayName}</span>
-                {user.isAdmin && (
-                  <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded">Admin</span>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="ml-2 px-3 py-2 rounded-md bg-slate-100 text-sm hover:bg-slate-200"
-                >
-                  Sign Out
-                </button>
+        {/* Right Side Actions */}
+        <div className="header-actions">
+          {/* Theme Toggle */}
+          <button
+            className="theme-toggle"
+            onClick={() => setDarkMode(!darkMode)}
+            title="Toggle dark mode"
+          >
+            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+
+          {/* User Menu */}
+          {user ? (
+            <div className="user-menu">
+              <div className="user-info">
+                <div className="user-avatar">{user.displayName?.charAt(0)}</div>
+                <div className="user-details">
+                  <span className="user-name">{user.displayName}</span>
+                  <span className="user-role">{user.role}</span>
+                </div>
               </div>
-            ) : (
+
               <button
-                onClick={() => setShowAuthModal(true)}
-                className="ml-2 px-3 py-2 rounded-md bg-blue-100 text-blue-700 text-sm hover:bg-blue-200 font-medium"
+                className="logout-btn"
+                onClick={onLogout}
+                title="Logout"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          ) : (
+            <div className="auth-buttons">
+              <button
+                className="btn-login"
+                onClick={() => onAuthClick("login")}
               >
                 Sign In
               </button>
-            )}
-          </nav>
-        </div>
-      </header>
+              <button
+                className="btn-signup"
+                onClick={() => onAuthClick("register")}
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
 
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={handleAuthSuccess}
-      />
-    </>
+          {/* Mobile Menu Toggle */}
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Mobile Navigation Menu */}
+      {isMenuOpen && (
+        <motion.nav
+          className="mobile-menu"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+        >
+          {getNavItems().map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleNavClick(item.id)}
+              className={`mobile-nav-item ${currentPage === item.id ? "active" : ""}`}
+            >
+              {item.icon} {item.label}
+            </button>
+          ))}
+        </motion.nav>
+      )}
+    </header>
   );
 }

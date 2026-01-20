@@ -1,159 +1,249 @@
 import React, { useState } from "react";
-import { setToken } from "../utils/auth";
-import { authAPI } from "../utils/api";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
+import "../styles/AuthModal.css";
 
-export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
-  const [isLogin, setIsLogin] = useState(true);
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+export function AuthModal({ mode = "login", onClose, onSwitchMode, onAuthenticate }) {
+  const [isLogin, setIsLogin] = useState(mode === "login");
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [requestToContribute, setRequestToContribute] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleAuthSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setAuthError("");
-    setAuthLoading(true);
+    setError("");
+    setLoading(true);
 
     try {
-      let response;
       if (isLogin) {
-        response = await authAPI.login(email, password);
+        if (!email || !password) {
+          setError("Please fill in all fields");
+          setLoading(false);
+          return;
+        }
+
+        // Call actual login API
+        const response = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.message || 'Login failed');
+          setLoading(false);
+          return;
+        }
+
+        // Save token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        onAuthenticate?.(data.user);
       } else {
-        response = await authAPI.register(email, displayName, password, confirmPassword, requestToContribute);
+        if (!email || !displayName || !password || !confirmPassword) {
+          setError("Please fill in all fields");
+          setLoading(false);
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 6) {
+          setError("Password must be at least 6 characters");
+          setLoading(false);
+          return;
+        }
+
+        // Call actual register API
+        const response = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            email, 
+            displayName, 
+            password, 
+            confirmPassword,
+            requestToContribute 
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.message || 'Registration failed');
+          setLoading(false);
+          return;
+        }
+
+        // Save token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        onAuthenticate?.(data.user);
       }
 
-      if (response.token) {
-        setToken(response.token);
-        onAuthSuccess(response.user);
-        onClose();
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        setDisplayName("");
-      } else {
-        setAuthError(response.message || "Authentication failed");
-      }
-    } catch (error) {
-      setAuthError(error.message || "Authentication failed");
-    } finally {
-      setAuthLoading(false);
+      setLoading(false);
+    } catch (err) {
+      setError(err.message || 'An error occurred. Make sure the server is running.');
+      setLoading(false);
     }
   };
 
-  if (!isOpen) return null;
+  const handleSwitchMode = () => {
+    setIsLogin(!isLogin);
+    setError("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setDisplayName("");
+    setRequestToContribute(false);
+  };
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40"
-        onClick={onClose}
-      />
-      
-      {/* Modal Container */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-2xl pointer-events-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">
-              {isLogin ? "Sign In" : "Create Account"}
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-2xl text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              ×
-            </button>
+    <motion.div
+      className="auth-modal-backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="auth-modal-container"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          className="auth-modal-close"
+          onClick={onClose}
+        >
+          <X size={24} />
+        </button>
+
+        {/* Header */}
+        <div className="auth-modal-header">
+          <h2>{isLogin ? "Welcome Back" : "Create Your Account"}</h2>
+          <p>{isLogin ? "Sign in to your GenRemnant account" : "Join our community"}</p>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            className="auth-error"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {error}
+          </motion.div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+            />
           </div>
 
-          {authError && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-              {authError}
+          {!isLogin && (
+            <div className="form-group">
+              <label>Display Name</label>
+              <input
+                type="text"
+                placeholder="Your Name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                disabled={loading}
+              />
             </div>
           )}
 
-          <form onSubmit={handleAuthSubmit} className="space-y-3">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-
-            {!isLogin && (
-              <input
-                type="text"
-                placeholder="Display Name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full p-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            )}
-
+          <div className="form-group">
+            <label>Password</label>
             <input
               type="password"
-              placeholder="Password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+              disabled={loading}
             />
+          </div>
 
-            {!isLogin && (
+          {!isLogin && (
+            <div className="form-group">
+              <label>Confirm Password</label>
               <input
                 type="password"
-                placeholder="Confirm Password"
+                placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full p-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+                disabled={loading}
               />
-            )}
+            </div>
+          )}
 
-            {!isLogin && (
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={requestToContribute}
-                  onChange={(e) => setRequestToContribute(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span>Request to contribute (request will be reviewed by admin)</span>
+          {!isLogin && (
+            <div className="form-checkbox">
+              <input
+                type="checkbox"
+                id="contribute"
+                checked={requestToContribute}
+                onChange={(e) => setRequestToContribute(e.target.checked)}
+                disabled={loading}
+              />
+              <label htmlFor="contribute">
+                I want to contribute (request will be reviewed by admins)
               </label>
-            )}
+            </div>
+          )}
 
-            <button
-              type="submit"
-              disabled={authLoading}
-              className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 font-medium transition-colors"
-            >
-              {authLoading ? "Processing..." : isLogin ? "Sign In" : "Create Account"}
-            </button>
-          </form>
+          <button
+            type="submit"
+            className="auth-submit-btn"
+            disabled={loading}
+          >
+            {loading ? (isLogin ? "Signing In..." : "Creating Account...") : isLogin ? "Sign In" : "Create Account"}
+          </button>
+        </form>
 
-          <div className="mt-4 text-center text-sm">
+        {/* Toggle Mode */}
+        <div className="auth-toggle">
+          <p>
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setAuthError("");
-                setEmail("");
-                setPassword("");
-                setConfirmPassword("");
-                setDisplayName("");
-              }}
-              className="text-blue-500 hover:underline font-medium"
+              type="button"
+              onClick={handleSwitchMode}
+              className="auth-toggle-btn"
             >
               {isLogin ? "Sign Up" : "Sign In"}
             </button>
-          </div>
+          </p>
         </div>
-      </div>
-    </>
+      </motion.div>
+    </motion.div>
   );
 }

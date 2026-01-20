@@ -1,64 +1,83 @@
-const { DataTypes } = require('sequelize');
-const bcrypt = require('bcryptjs');
-const { sequelize } = require('../config/database');
+const db = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
 
-const User = sequelize.define('User', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
+const User = {
+  findById: (id) => {
+    return new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE id = ?', [id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
   },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: {
-      isEmail: true,
-    },
-  },
-  displayName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  profileImage: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  isAdmin: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  requestedContributor: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  lastLogin: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
-}, {
-  timestamps: true,
-  hooks: {
-    beforeCreate: async (user) => {
-      if (user.password) {
-        user.password = await bcrypt.hash(user.password, 10);
-      }
-    },
-    beforeUpdate: async (user) => {
-      if (user.changed('password')) {
-        user.password = await bcrypt.hash(user.password, 10);
-      }
-    },
-  },
-});
 
-// Method to verify password
-User.prototype.verifyPassword = async function(password) {
-  return bcrypt.compare(password, this.password);
+  findByEmail: (email) => {
+    return new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+  },
+
+  create: (userData) => {
+    return new Promise((resolve, reject) => {
+      const id = uuidv4();
+      const { email, displayName, passwordHash, role = 'regular' } = userData;
+      db.run(
+        `INSERT INTO users (id, email, displayName, passwordHash, role) VALUES (?, ?, ?, ?, ?)`,
+        [id, email, displayName, passwordHash, role],
+        function (err) {
+          if (err) reject(err);
+          else resolve({ id, email, displayName, role });
+        }
+      );
+    });
+  },
+
+  update: (id, updates) => {
+    return new Promise((resolve, reject) => {
+      const fields = Object.keys(updates)
+        .map((key) => `${key} = ?`)
+        .join(', ');
+      const values = Object.values(updates);
+      db.run(
+        `UPDATE users SET ${fields}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+        [...values, id],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+  },
+
+  getAllUsers: () => {
+    return new Promise((resolve, reject) => {
+      db.all('SELECT id, email, displayName, role, status, createdAt FROM users', (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  },
+
+  suspendUser: (id) => {
+    return new Promise((resolve, reject) => {
+      db.run('UPDATE users SET status = ? WHERE id = ?', ['suspended', id], function (err) {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  },
+
+  changeRole: (id, newRole) => {
+    return new Promise((resolve, reject) => {
+      db.run('UPDATE users SET role = ? WHERE id = ?', [newRole, id], function (err) {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  },
 };
 
 module.exports = User;
