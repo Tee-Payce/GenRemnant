@@ -49,8 +49,8 @@ export function LandingPage({ posts, user, onComment, onReaction, onSearch }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h1>GenRemnant Community</h1>
-        <p>Daily inspiration and sermons to uplift your spirit</p>
+        <h1>The Generation Remnant</h1>
+        <p><span className='text-yellow-300'>Romans 11:5</span> "Even so then at this present time there is a remnant, according to the election of grace."</p>
 
         {/* Search Bar */}
         <div className="search-container">
