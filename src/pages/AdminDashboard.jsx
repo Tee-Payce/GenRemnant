@@ -12,11 +12,13 @@ import {
   Search,
   ChevronDown,
 } from 'lucide-react';
+import { usePostRefresh } from '../context/PostRefreshContext';
 import '../styles/AdminDashboard.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-export function AdminDashboard({ user, onPostApproved }) {
+export function AdminDashboard({ user }) {
+  const { triggerRefresh } = usePostRefresh();
   const [activeTab, setActiveTab] = useState('overview');
   const [users, setUsers] = useState([]);
   const [pendingPosts, setPendingPosts] = useState([]);
@@ -116,8 +118,8 @@ export function AdminDashboard({ user, onPostApproved }) {
       if (res.ok) {
         setPendingPosts((prev) => prev.filter((p) => p.id !== postId));
         setStats(prev => ({ ...prev, pendingPosts: prev.pendingPosts - 1 }));
-        // Notify parent to refresh published posts
-        onPostApproved?.();
+        // Trigger refresh to update published posts
+        triggerRefresh();
       }
     } catch (err) {
       console.error('Error approving post:', err);
@@ -312,7 +314,7 @@ export function AdminDashboard({ user, onPostApproved }) {
                 </div>
                 <div className="stat-content">
                   <h3>Active Status</h3>
-                  <p className="stat-number" style={{ color: '#22c55e' }}>
+                  <p className="stat-number" style={{ color: '#22c55e', fontSize: '1.5rem' }}>
                     Operational
                   </p>
                 </div>

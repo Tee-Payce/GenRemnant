@@ -1,44 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Heart, MessageCircle, Share2, ThumbsUp, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { Search, Link as LinkIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PostModal } from '../components/PostModal';
 import '../styles/LandingPage.css';
 
-export function LandingPage({ posts, user, onComment, onReaction, onSearch }) {
-  const [filteredPosts, setFilteredPosts] = useState(posts);
+export function LandingPage({ posts, user, onNavigateLibrary = () => {}, onComment, onReaction }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
-  const [expandedPostId, setExpandedPostId] = useState(null);
+  const [selectedPost, setSelectedPost] = useState(null);
 
-  useEffect(() => {
-    filterPosts();
-  }, [posts, selectedType, searchQuery]);
+  // Get latest sermon and daily motivation
+  const latestSermon = posts.find((p) => p.type === 'sermon' || p.category === 'sermon');
+  const latestMotivation = posts.find((p) => p.type === 'daily_motivation' || p.category === 'devotional');
 
-  const filterPosts = () => {
-    let result = posts;
-
-    if (selectedType !== 'all') {
-      result = result.filter((p) => p.type === selectedType);
+  const handleSearchNavigate = () => {
+    if (searchQuery.trim() && typeof onNavigateLibrary === 'function') {
+      onNavigateLibrary(searchQuery);
     }
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(query) ||
-          p.content.toLowerCase().includes(query) ||
-          (p.authorName && p.authorName.toLowerCase().includes(query))
-      );
-    }
-
-    setFilteredPosts(result);
   };
-
-  const reactionTypes = [
-    { key: 'like', icon: ThumbsUp, label: 'Like' },
-    { key: 'heart', icon: Heart, label: 'Heart' },
-    { key: 'amen', icon: Zap, label: 'Amen' },
-    { key: 'inspire', icon: MessageCircle, label: 'Inspire' },
-  ];
 
   return (
     <div className="landing-page">
@@ -60,175 +38,178 @@ export function LandingPage({ posts, user, onComment, onReaction, onSearch }) {
             placeholder="Search sermons, motivations, and comments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onClick={(e) => {
+              if (e.key === 'Enter') {
+                handleSearchNavigate();
+              }
+            }}
             className="search-input text-slate-900 dark:text-gray-100"
           />
-        </div>
-
-        {/* Filter Buttons */}
-        <div className="filter-buttons">
           <button
-            className={`filter-btn ${selectedType === 'all' ? 'active' : ''}`}
-            onClick={() => setSelectedType('all')}
+            onClick={handleSearchNavigate}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
           >
-            All Posts
-          </button>
-          <button
-            className={`filter-btn ${selectedType === 'sermon' ? 'active' : ''}`}
-            onClick={() => setSelectedType('sermon')}
-          >
-            Sermons
-          </button>
-          <button
-            className={`filter-btn ${selectedType === 'daily_motivation' ? 'active' : ''}`}
-            onClick={() => setSelectedType('daily_motivation')}
-          >
-            Daily Motivations
+            Search
           </button>
         </div>
       </motion.div>
 
-      {/* CTA Buttons for Non-logged Users */}
-      {!user && (
-        <motion.div
-          className="cta-section"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <button className="btn btn-primary">Sign In</button>
-          <button className="btn btn-secondary">Sign Up</button>
-        </motion.div>
-      )}
-
-      {/* Posts Feed */}
+      {/* Latest Posts Section */}
       <div className="posts-feed">
-        {filteredPosts.length === 0 ? (
-          <div className="no-posts">
-            <p>No posts found. Check back soon!</p>
-          </div>
-        ) : (
-          filteredPosts.map((post, index) => (
+        <h2 className="text-2xl font-bold mb-6">Latest Posts</h2>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Latest Sermon */}
+          {latestSermon ? (
             <motion.div
-              key={post.id}
-              className="post-card"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)}
+              transition={{ delay: 0.1 }}
+              className="post-card"
             >
               {/* Post Header */}
               <div className="post-header">
                 <div className="author-info">
-                  <div className="avatar">{post.authorName?.charAt(0) || 'A'}</div>
+                  <div className="avatar">{latestSermon.authorName?.charAt(0) || 'A'}</div>
                   <div>
-                    <h3>{post.authorName || 'Anonymous'}</h3>
+                    <h3>{latestSermon.authorName || 'Anonymous'}</h3>
                     <span className="post-date">
-                      {new Date(post.publishedAt).toLocaleDateString()}
+                      {new Date(latestSermon.publishedAt || latestSermon.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
-                <span className={`post-type-badge ${post.type}`}>
-                  {post.type === 'sermon' ? '📖 Sermon' : '✨ Daily Motivation'}
+                <span className="post-type-badge sermon">
+                  📖 Sermon
                 </span>
               </div>
 
               {/* Post Title */}
-              <h2 className="post-title">{post.title}</h2>
+              <h2 className="post-title">{latestSermon.title}</h2>
 
-              {/* Post Content */}
+              {/* Post Content Preview */}
               <div className="post-content">
-                {expandedPostId === post.id ? (
-                  <p>{post.content || 'No content'}</p>
-                ) : (
-                  <p>{(post.content || '').substring(0, 200)}...</p>
-                )}
+                <p>{(latestSermon.content || '').substring(0, 200)}...</p>
               </div>
 
               {/* Post Summary */}
-              {post.summary && (
+              {latestSermon.summary && (
                 <div className="post-summary">
-                  <strong>Summary:</strong> {post.summary}
+                  <strong>Summary:</strong> {latestSermon.summary}
                 </div>
               )}
 
-              {/* Reactions Section */}
-              <div className="reactions-section">
-                <div className="reaction-counts">
-                  {Object.entries(post.reactions || {}).map(([type, count]) => (
-                    <span key={type} className="reaction-count">
-                      {type} {count}
-                    </span>
-                  ))}
-                </div>
-
-                {user && (
-                  <div className="reaction-buttons">
-                    {reactionTypes.map(({ key, icon: Icon, label }) => (
-                      <button
-                        key={key}
-                        className="reaction-btn"
-                        title={label}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onReaction(post.id, key);
-                        }}
-                      >
-                        <Icon size={18} />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Comments Section */}
-              <div className="comments-section">
-                <h4>Comments ({post.comments?.length || 0})</h4>
-                {post.comments?.length > 0 && (
-                  <div className="comments-preview">
-                    {post.comments.slice(0, 2).map((comment) => (
-                      <div key={comment.id} className="comment-item">
-                        <strong>{comment.userName || 'User'}</strong>
-                        <p>{comment.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {user && (
-                  <div className="comment-input-box">
-                    <input
-                      type="text"
-                      placeholder="Add a comment..."
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && e.target.value.trim()) {
-                          onComment(post.id, e.target.value);
-                          e.target.value = '';
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="post-actions">
-                <button className="action-btn">
-                  <MessageCircle size={18} /> Comment
-                </button>
-                <button className="action-btn">
-                  <Share2 size={18} /> Share
-                </button>
-                {user?.role === 'regular' && (
-                  <button className="action-btn btn-upgrade">
-                    Request to be a Contributor
-                  </button>
-                )}
-              </div>
+              {/* Read Full Button */}
+              <button
+                onClick={() => setSelectedPost(latestSermon)}
+                className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
+              >
+                Read Full Sermon
+              </button>
             </motion.div>
-          ))
-        )}
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="post-card no-posts"
+            >
+              <p>No sermons yet. Check back soon!</p>
+            </motion.div>
+          )}
+
+          {/* Latest Daily Motivation */}
+          {latestMotivation ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="post-card"
+            >
+              {/* Post Header */}
+              <div className="post-header">
+                <div className="author-info">
+                  <div className="avatar">{latestMotivation.authorName?.charAt(0) || 'A'}</div>
+                  <div>
+                    <h3>{latestMotivation.authorName || 'Anonymous'}</h3>
+                    <span className="post-date">
+                      {new Date(latestMotivation.publishedAt || latestMotivation.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <span className="post-type-badge daily_motivation">
+                  ✨ Daily Motivation
+                </span>
+              </div>
+
+              {/* Post Title */}
+              <h2 className="post-title">{latestMotivation.title}</h2>
+
+              {/* Post Content Preview */}
+              <div className="post-content">
+                <p>{(latestMotivation.content || '').substring(0, 200)}...</p>
+              </div>
+
+              {/* Post Summary */}
+              {latestMotivation.summary && (
+                <div className="post-summary">
+                  <strong>Summary:</strong> {latestMotivation.summary}
+                </div>
+              )}
+
+              {/* Read Full Button */}
+              <button
+                onClick={() => setSelectedPost(latestMotivation)}
+                className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
+              >
+                Read Full Motivation
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="post-card no-posts"
+            >
+              <p>No daily motivations yet. Check back soon!</p>
+            </motion.div>
+          )}
+        </div>
+
+        {/* View All Button */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-center mt-8"
+        >
+          <button
+            onClick={() => {
+              if (typeof onNavigateLibrary === 'function') {
+                onNavigateLibrary();
+              }
+            }}
+            className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            <LinkIcon size={18} />
+            View All in Library
+          </button>
+        </motion.div>
       </div>
+
+      {/* Post Modal */}
+      <AnimatePresence>
+        {selectedPost && (
+          <PostModal
+            post={selectedPost}
+            user={user}
+            onClose={() => setSelectedPost(null)}
+            onComment={onComment}
+            onReact={onReaction}
+            className="mt-50"
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

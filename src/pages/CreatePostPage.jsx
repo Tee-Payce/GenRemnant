@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { usePostRefresh } from '../context/PostRefreshContext';
 import '../styles/CreatePostPage.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 export function CreatePostPage({ user, onPostCreate }) {
+  const { triggerRefresh } = usePostRefresh();
   const [formData, setFormData] = useState({
     type: 'daily_motivation',
     title: '',
@@ -96,6 +98,9 @@ export function CreatePostPage({ user, onPostCreate }) {
 
       setSubmittedPosts((prev) => [newPost, ...prev]);
       onPostCreate?.(newPost);
+      
+      // Trigger refresh to update the post list
+      triggerRefresh();
 
       // Reset form
       setFormData({

@@ -10,6 +10,7 @@ import { realtimeUpdates } from "./utils/realtimeUpdates";
 export default function App() {
   const [posts, setPosts] = useState(samplePosts);
   const [view, setView] = useState("visit"); // 'visit' or 'admin'
+  const [currentPage, setCurrentPage] = useState("landing"); // 'landing' or 'library'
   const [user, setUser] = useState(null);
   
   const [darkMode, setDarkMode] = useState(false);
@@ -50,14 +51,23 @@ export default function App() {
     );
   }
 
+  const handlePageChange = (newPage) => {
+    if (newPage === "landing" || newPage === "library") {
+      setCurrentPage(newPage);
+    } else {
+      setView(newPage);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-500">
-      <Header view={view} setView={setView} user={user} setUser={setUser} darkMode={darkMode} setDarkMode={setDarkMode} />
+      <Header currentPage={currentPage} setCurrentPage={handlePageChange} user={user} setUser={setUser} darkMode={darkMode} setDarkMode={setDarkMode} />
 
       <main className="max-w-4xl mx-auto p-4">
+        
         <AnimatePresence mode="wait">
           {view === "visit" ? (
-            <VisitPage posts={posts} user={user} />
+            <VisitPage posts={posts} user={user} currentPage={currentPage} setCurrentPage={handlePageChange} onReact={addReaction} onComment={addComment} />
           ) : (
             <AdminPage user={user} />
           )}

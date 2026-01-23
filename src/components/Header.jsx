@@ -22,6 +22,7 @@ export function Header({
   const getNavItems = () => {
     const items = [
       { id: "landing", label: "Home", icon: "🏠" },
+      { id: "library", label: "Library", icon: "📚" },
     ];
 
     if (user) {

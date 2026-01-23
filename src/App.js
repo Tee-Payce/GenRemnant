@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { LandingPage } from "./pages/LandingPage";
+import { LibraryPage } from "./pages/LibraryPage";
 import { CreatePostPage } from "./pages/CreatePostPage";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { VisitPage } from "./pages/VisitPage";
 import { AuthModal } from "./components/AuthModal";
+import { PostRefreshProvider, usePostRefresh } from "./context/PostRefreshContext";
 import { samplePosts } from "./data/samplePosts";
 import { realtimeUpdates } from "./utils/realtimeUpdates";
 import "./index.css";
@@ -14,6 +16,15 @@ import "./index.css";
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 export default function App() {
+  return (
+    <PostRefreshProvider>
+      <AppContent />
+    </PostRefreshProvider>
+  );
+}
+
+function AppContent() {
+  const { refreshTrigger, triggerRefresh } = usePostRefresh();
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState("landing"); // 'landing', 'create-post', 'admin', 'visit'
   const [user, setUser] = useState(null);
@@ -22,38 +33,8 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
-
-  useEffect(() => {
-    // Initialize real-time updates
-    realtimeUpdates.init();
-
-    // Check if user is logged in (from localStorage)
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Failed to parse stored user:", error);
-      }
-    }
-
-    // Fetch published posts from API
-    loadPublishedPosts();
-
-    // Cleanup on unmount
-    return () => {
-      realtimeUpdates.cleanup();
-    };
-  }, []);
-
-  const loadPublishedPosts = async () => {
+  // Load published posts with comments and reactions
+  const loadPublishedPosts = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/api/posts/published`);
       if (response.ok) {
@@ -89,7 +70,38 @@ export default function App() {
       console.error("Error loading posts:", err);
       setPosts(samplePosts);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
+
+  useEffect(() => {
+    // Initialize real-time updates
+    realtimeUpdates.init();
+
+    // Check if user is logged in (from localStorage)
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Failed to parse stored user:", error);
+      }
+    }
+
+    // Fetch published posts from API
+    loadPublishedPosts();
+
+    // Cleanup on unmount
+    return () => {
+      realtimeUpdates.cleanup();
+    };
+  }, [refreshTrigger, loadPublishedPosts]);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -109,9 +121,8 @@ export default function App() {
   };
 
   const addPost = (newPost) => {
-    // Reload published posts to ensure we have the latest data
+    // Trigger refresh via context
     // (new posts start as pending, so they won't show immediately)
-    loadPublishedPosts();
   };
 
   const addComment = (postId, comment) => {
@@ -128,8 +139,8 @@ export default function App() {
     })
       .then((res) => res.json())
       .then(() => {
-        // Reload posts to get the new comment
-        loadPublishedPosts();
+        // Trigger refresh via context
+        triggerRefresh();
       })
       .catch((err) => console.error("Error adding comment:", err));
   };
@@ -148,8 +159,8 @@ export default function App() {
     })
       .then((res) => res.json())
       .then(() => {
-        // Reload posts to get the new reaction
-        loadPublishedPosts();
+        // Trigger refresh via context
+        triggerRefresh();
       })
       .catch((err) => console.error("Error adding reaction:", err));
   };
@@ -164,7 +175,20 @@ export default function App() {
             user={user}
             onComment={addComment}
             onReaction={addReaction}
+            onNavigateLibrary={(query) => {
+              setCurrentPage("library");
+            }}
             onSearch={(query) => console.log("Search:", query)}
+          />
+        );
+
+      case "library":
+        return (
+          <LibraryPage
+            posts={posts}
+            user={user}
+            onComment={addComment}
+            onReaction={addReaction}
           />
         );
 
@@ -190,7 +214,7 @@ export default function App() {
             </div>
           );
         }
-        return <AdminDashboard user={user} onPostApproved={loadPublishedPosts} />;
+        return <AdminDashboard user={user} />;
 
       case "visit":
         return <VisitPage posts={posts} user={user} />;
@@ -202,6 +226,9 @@ export default function App() {
             user={user}
             onComment={addComment}
             onReaction={addReaction}
+            onNavigateLibrary={(query) => {
+              setCurrentPage("library");
+            }}
             onSearch={(query) => console.log("Search:", query)}
           />
         );
