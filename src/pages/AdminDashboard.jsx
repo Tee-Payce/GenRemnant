@@ -17,11 +17,12 @@ import '../styles/AdminDashboard.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-export function AdminDashboard({ user }) {
+export function AdminDashboard({ user, posts = [] }) {
   const { triggerRefresh } = usePostRefresh();
   const [activeTab, setActiveTab] = useState('overview');
   const [users, setUsers] = useState([]);
   const [pendingPosts, setPendingPosts] = useState([]);
+  const [publishedPosts, setPublishedPosts] = useState([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
     regularUsers: 0,
@@ -29,6 +30,9 @@ export function AdminDashboard({ user }) {
     admins: 0,
     publishedPosts: 0,
     pendingPosts: 0,
+    pendingSermons: 0,
+    pendingMotivations: 0,
+    pendingContributorRequests: 0,
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,6 +86,7 @@ export function AdminDashboard({ user }) {
         regularUsers,
         contributors,
         admins,
+        publishedPosts: posts.length
       }));
 
       // Load pending posts
@@ -91,7 +96,19 @@ export function AdminDashboard({ user }) {
       if (postsRes.ok) {
         const postsData = await postsRes.json();
         setPendingPosts(postsData.posts || []);
-        setStats(prev => ({ ...prev, pendingPosts: postsData.posts?.length || 0 }));
+        
+        // Calculate pending post types
+        const pendingSermons = postsData.posts?.filter(p => p.type === 'sermon' || p.category === 'sermon').length || 0;
+        const pendingMotivations = postsData.posts?.filter(p => p.type === 'daily_motivation' || p.category === 'daily_motivation').length || 0;
+        const pendingContributorRequests = usersData.users?.filter(u => u.role === 'regular' && u.requestedRole === 'contributor').length || 0;
+        
+        setStats(prev => ({ 
+          ...prev, 
+          pendingPosts: postsData.posts?.length || 0,
+          pendingSermons,
+          pendingMotivations,
+          pendingContributorRequests
+        }));
       } else {
         console.error('Posts fetch error:', postsRes.status);
       }
@@ -116,9 +133,20 @@ export function AdminDashboard({ user }) {
         body: JSON.stringify({ postId }),
       });
       if (res.ok) {
+        const approvedPost = pendingPosts.find(p => p.id === postId);
         setPendingPosts((prev) => prev.filter((p) => p.id !== postId));
-        setStats(prev => ({ ...prev, pendingPosts: prev.pendingPosts - 1 }));
-        // Trigger refresh to update published posts
+        
+        // Update counts based on post type
+        setStats(prev => ({
+          ...prev,
+          pendingPosts: prev.pendingPosts - 1,
+          pendingSermons: (approvedPost?.type === 'sermon' || approvedPost?.category === 'sermon') 
+            ? prev.pendingSermons - 1 : prev.pendingSermons,
+          pendingMotivations: (approvedPost?.type === 'daily_motivation' || approvedPost?.category === 'daily_motivation') 
+            ? prev.pendingMotivations - 1 : prev.pendingMotivations,
+          publishedPosts: prev.publishedPosts + 1
+        }));
+        
         triggerRefresh();
       }
     } catch (err) {
@@ -140,10 +168,20 @@ export function AdminDashboard({ user }) {
         body: JSON.stringify({ postId, feedback: feedbackText }),
       });
       if (res.ok) {
+        const rejectedPost = pendingPosts.find(p => p.id === postId);
         setPendingPosts((prev) => prev.filter((p) => p.id !== postId));
         setFeedbackText('');
         setExpandedPostId(null);
-        setStats(prev => ({ ...prev, pendingPosts: prev.pendingPosts - 1 }));
+        
+        // Update counts based on post type
+        setStats(prev => ({
+          ...prev,
+          pendingPosts: prev.pendingPosts - 1,
+          pendingSermons: (rejectedPost?.type === 'sermon' || rejectedPost?.category === 'sermon') 
+            ? prev.pendingSermons - 1 : prev.pendingSermons,
+          pendingMotivations: (rejectedPost?.type === 'daily_motivation' || rejectedPost?.category === 'daily_motivation') 
+            ? prev.pendingMotivations - 1 : prev.pendingMotivations
+        }));
       }
     } catch (err) {
       console.error('Error rejecting post:', err);
@@ -159,8 +197,18 @@ export function AdminDashboard({ user }) {
         body: JSON.stringify({ postId }),
       });
       if (res.ok) {
+        const deletedPost = pendingPosts.find(p => p.id === postId);
         setPendingPosts((prev) => prev.filter((p) => p.id !== postId));
-        setStats(prev => ({ ...prev, pendingPosts: prev.pendingPosts - 1 }));
+        
+        // Update counts based on post type
+        setStats(prev => ({
+          ...prev,
+          pendingPosts: prev.pendingPosts - 1,
+          pendingSermons: (deletedPost?.type === 'sermon' || deletedPost?.category === 'sermon') 
+            ? prev.pendingSermons - 1 : prev.pendingSermons,
+          pendingMotivations: (deletedPost?.type === 'daily_motivation' || deletedPost?.category === 'daily_motivation') 
+            ? prev.pendingMotivations - 1 : prev.pendingMotivations
+        }));
       }
     } catch (err) {
       console.error('Error deleting post:', err);
@@ -200,9 +248,32 @@ export function AdminDashboard({ user }) {
         body: JSON.stringify({ userId, newRole }),
       });
       if (res.ok) {
+        const oldUser = users.find(u => u.id === userId);
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
         );
+        
+        // Update role counts
+        setStats(prev => {
+          let newStats = { ...prev };
+          
+          // Decrement old role count
+          if (oldUser?.role === 'regular') newStats.regularUsers--;
+          else if (oldUser?.role === 'contributor') newStats.contributors--;
+          else if (oldUser?.role === 'admin') newStats.admins--;
+          
+          // Increment new role count
+          if (newRole === 'regular') newStats.regularUsers++;
+          else if (newRole === 'contributor') newStats.contributors++;
+          else if (newRole === 'admin') newStats.admins++;
+          
+          // Update contributor requests if promoting from regular to contributor
+          if (oldUser?.role === 'regular' && newRole === 'contributor') {
+            newStats.pendingContributorRequests = Math.max(0, newStats.pendingContributorRequests - 1);
+          }
+          
+          return newStats;
+        });
       }
     } catch (err) {
       console.error('Error changing role:', err);
@@ -304,7 +375,10 @@ export function AdminDashboard({ user }) {
                 </div>
                 <div className="stat-content">
                   <h3>Pending Review</h3>
-                  <p className="stat-number">{stats.pendingPosts}</p>
+                  <p className="stat-number">{stats.pendingPosts + stats.pendingContributorRequests}</p>
+                  <small>
+                    {stats.pendingSermons} sermons • {stats.pendingMotivations} motivations • {stats.pendingContributorRequests} contributor requests
+                  </small>
                 </div>
               </div>
 

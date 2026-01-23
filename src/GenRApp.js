@@ -4,12 +4,13 @@ import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { VisitPage } from "./pages/VisitPage";
 import { AdminPage } from "./pages/AdminPage";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import { samplePosts } from "./data/samplePosts";
 import { realtimeUpdates } from "./utils/realtimeUpdates";
 
 export default function App() {
   const [posts, setPosts] = useState(samplePosts);
-  const [view, setView] = useState("visit"); // 'visit' or 'admin'
+  const [view, setView] = useState("visit"); // 'visit', 'admin', or 'dashboard'
   const [currentPage, setCurrentPage] = useState("landing"); // 'landing' or 'library'
   const [user, setUser] = useState(null);
   
@@ -54,6 +55,9 @@ export default function App() {
   const handlePageChange = (newPage) => {
     if (newPage === "landing" || newPage === "library") {
       setCurrentPage(newPage);
+      setView("visit");
+    } else if (newPage === "admin") {
+      setView("dashboard");
     } else {
       setView(newPage);
     }
@@ -68,6 +72,8 @@ export default function App() {
         <AnimatePresence mode="wait">
           {view === "visit" ? (
             <VisitPage posts={posts} user={user} currentPage={currentPage} setCurrentPage={handlePageChange} onReact={addReaction} onComment={addComment} />
+          ) : view === "dashboard" ? (
+            <AdminDashboard user={user} posts={posts} />
           ) : (
             <AdminPage user={user} />
           )}
