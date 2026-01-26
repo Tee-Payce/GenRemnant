@@ -1,0 +1,20 @@
+/* User info button styles */
+.user-info {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.user-info:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .user-info:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}

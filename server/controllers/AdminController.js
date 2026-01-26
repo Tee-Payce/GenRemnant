@@ -7,7 +7,15 @@ const AdminController = {
   getAllUsers: async (req, res) => {
     try {
       const users = await User.getAllUsers();
-      res.json({ success: true, users });
+      // Ensure all profile fields are included
+      const usersWithProfiles = users.map(user => ({
+        ...user,
+        whatsapp: user.whatsapp || null,
+        instagram: user.instagram || null,
+        tiktok: user.tiktok || null,
+        facebook: user.facebook || null
+      }));
+      res.json({ success: true, users: usersWithProfiles });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -43,6 +51,21 @@ const AdminController = {
 
       await User.suspendUser(userId);
       res.json({ success: true, message: 'User suspended' });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  updateUserWhatsApp: async (req, res) => {
+    try {
+      const { userId, whatsapp } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+      }
+
+      await User.update(userId, { whatsapp });
+      res.json({ success: true, message: 'WhatsApp number updated' });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

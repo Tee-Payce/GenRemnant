@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Heart, MessageCircle, Share2, ThumbsUp, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ShareControls } from '../components/ShareControls';
 import '../styles/LibraryPage.css';
 
 export function LibraryPage({ posts, user, initialSearchQuery = '', onComment, onReaction }) {
@@ -9,6 +10,7 @@ export function LibraryPage({ posts, user, initialSearchQuery = '', onComment, o
   const [selectedType, setSelectedType] = useState('all');
   const [expandedPostId, setExpandedPostId] = useState(null);
   const [expandedCommentsId, setExpandedCommentsId] = useState(null);
+  const [sharePost, setSharePost] = useState(null);
 
   useEffect(() => {
     filterPosts();
@@ -219,7 +221,13 @@ export function LibraryPage({ posts, user, initialSearchQuery = '', onComment, o
                   <button className="action-btn">
                     <MessageCircle size={18} /> Comment
                   </button>
-                  <button className="action-btn">
+                  <button 
+                    className="action-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSharePost(post);
+                    }}
+                  >
                     <Share2 size={18} /> Share
                   </button>
                   {user?.role === 'regular' && (
@@ -233,6 +241,14 @@ export function LibraryPage({ posts, user, initialSearchQuery = '', onComment, o
           </div>
         )}
       </div>
+
+      {/* Share Modal */}
+      <ShareControls 
+        post={sharePost}
+        user={user}
+        isOpen={!!sharePost}
+        onClose={() => setSharePost(null)}
+      />
     </div>
   );
 }

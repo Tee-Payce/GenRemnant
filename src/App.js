@@ -4,6 +4,7 @@ import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { LandingPage } from "./pages/LandingPage";
 import { LibraryPage } from "./pages/LibraryPage";
+import { DiscoverRemnants } from "./pages/DiscoverRemnants";
 import { CreatePostPage } from "./pages/CreatePostPage";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { VisitPage } from "./pages/VisitPage";
@@ -190,6 +191,11 @@ function AppContent() {
             onComment={addComment}
             onReaction={addReaction}
           />
+        );
+
+      case "discover-remnants":
+        return (
+          <DiscoverRemnants user={user} onNavigate={setCurrentPage} />
         );
 
       case "create-post":

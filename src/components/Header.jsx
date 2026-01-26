@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Moon, Sun, Menu, X, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
+import { UserProfileDrawer } from "./UserProfileDrawer";
 import "../styles/Header.css";
+import "../styles/UserProfile.css";
 
 export function Header({
   user,
@@ -11,11 +13,25 @@ export function Header({
   onLogout,
   darkMode,
   setDarkMode,
+  onUpdateProfile,
+  onNavigate,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  
+  const handleProfileUpdate = async (profileData) => {
+    // Just call the parent update function
+    if (typeof onUpdateProfile === 'function') {
+      await onUpdateProfile(profileData);
+    }
+  };
 
   const handleNavClick = (page) => {
-    setCurrentPage(page);
+    if (onNavigate) {
+      onNavigate(page);
+    } else {
+      setCurrentPage(page);
+    }
     setIsMenuOpen(false);
   };
 
@@ -26,6 +42,8 @@ export function Header({
     ];
 
     if (user) {
+      items.push({ id: "discover-remnants", label: "Discover", icon: "👥" });
+      
       if (["contributor", "admin"].includes(user.role)) {
         items.push({ id: "create-post", label: "Create Post", icon: "✍️" });
       }
@@ -82,13 +100,16 @@ export function Header({
           {/* User Menu */}
           {user ? (
             <div className="user-menu">
-              <div className="user-info">
+              <button 
+                className="user-info"
+                onClick={() => setIsProfileOpen(true)}
+              >
                 <div className="user-avatar">{user.displayName?.charAt(0)}</div>
                 <div className="user-details">
                   <span className="user-name">{user.displayName}</span>
                   <span className="user-role">{user.role}</span>
                 </div>
-              </div>
+              </button>
 
               <button
                 className="logout-btn"
@@ -144,6 +165,15 @@ export function Header({
           ))}
         </motion.nav>
       )}
+
+      {/* User Profile Drawer */}
+      <UserProfileDrawer
+        user={user}
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        onUpdateProfile={handleProfileUpdate}
+        onNavigate={setCurrentPage}
+      />
     </header>
   );
 }

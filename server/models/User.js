@@ -35,6 +35,20 @@ const User = {
     });
   },
 
+  updateProfile: (id, profileData) => {
+    return new Promise((resolve, reject) => {
+      const { displayName, whatsapp, instagram, tiktok, facebook } = profileData;
+      db.run(
+        `UPDATE users SET displayName = ?, whatsapp = ?, instagram = ?, tiktok = ?, facebook = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+        [displayName, whatsapp, instagram, tiktok, facebook, id],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+  },
+
   update: (id, updates) => {
     return new Promise((resolve, reject) => {
       const fields = Object.keys(updates)
@@ -54,7 +68,7 @@ const User = {
 
   getAllUsers: () => {
     return new Promise((resolve, reject) => {
-      db.all('SELECT id, email, displayName, role, status, createdAt FROM users', (err, rows) => {
+      db.all('SELECT id, email, displayName, role, status, whatsapp, instagram, tiktok, facebook, createdAt FROM users', (err, rows) => {
         if (err) reject(err);
         else resolve(rows);
       });

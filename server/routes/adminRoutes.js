@@ -11,6 +11,7 @@ router.use(verifyToken, checkUserStatus, checkRole(['admin']));
 router.get('/users', AdminController.getAllUsers);
 router.post('/users/change-role', AdminController.changeUserRole);
 router.post('/users/suspend', AdminController.suspendUser);
+router.post('/users/update-whatsapp', AdminController.updateUserWhatsApp);
 router.post('/users/approve-contributor', AdminController.approveContributorRequest);
 router.post('/users/reject-contributor', AdminController.rejectContributorRequest);
 

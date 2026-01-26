@@ -280,6 +280,34 @@ export function AdminDashboard({ user, posts = [] }) {
     }
   };
 
+  const handleUpdateSocialMedia = async (userId, field, value) => {
+    // Update local state immediately for better UX
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, [field]: value } : u))
+    );
+
+    // Debounce API call
+    clearTimeout(window.socialMediaUpdateTimeout);
+    window.socialMediaUpdateTimeout = setTimeout(async () => {
+      const token = getToken();
+      try {
+        const res = await fetch(`${API_URL}/api/users/profile/${field}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ [field]: value }),
+        });
+        if (!res.ok) {
+          console.error(`Failed to update ${field}`);
+        }
+      } catch (err) {
+        console.error(`Error updating ${field}:`, err);
+      }
+    }, 1000);
+  };
+
   if (!user || user.role !== 'admin') {
     return (
       <motion.div className="admin-dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -452,6 +480,10 @@ export function AdminDashboard({ user, posts = [] }) {
                     <tr>
                       <th>Name</th>
                       <th>Email</th>
+                      <th>WhatsApp</th>
+                      <th>Instagram</th>
+                      <th>TikTok</th>
+                      <th>Facebook</th>
                       <th>Role</th>
                       <th>Status</th>
                       <th>Joined</th>
@@ -465,6 +497,70 @@ export function AdminDashboard({ user, posts = [] }) {
                           <strong>{user.displayName}</strong>
                         </td>
                         <td>{user.email}</td>
+                        <td>
+                          <input
+                            type="tel"
+                            value={user.whatsapp || ''}
+                            onChange={(e) => handleUpdateSocialMedia(user.id, 'whatsapp', e.target.value)}
+                            placeholder="+1234567890"
+                            className="social-input"
+                            style={{
+                              padding: '4px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              width: '100px'
+                            }}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={user.instagram || ''}
+                            onChange={(e) => handleUpdateSocialMedia(user.id, 'instagram', e.target.value)}
+                            placeholder="@username"
+                            className="social-input"
+                            style={{
+                              padding: '4px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              width: '100px'
+                            }}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={user.tiktok || ''}
+                            onChange={(e) => handleUpdateSocialMedia(user.id, 'tiktok', e.target.value)}
+                            placeholder="@username"
+                            className="social-input"
+                            style={{
+                              padding: '4px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              width: '100px'
+                            }}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={user.facebook || ''}
+                            onChange={(e) => handleUpdateSocialMedia(user.id, 'facebook', e.target.value)}
+                            placeholder="username"
+                            className="social-input"
+                            style={{
+                              padding: '4px 8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              width: '100px'
+                            }}
+                          />
+                        </td>
                         <td>
                           <select
                             value={user.role}

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, MessageCircle, Share2, ThumbsUp, Zap, X } from "lucide-react";
+import { ShareControls } from "./ShareControls";
 
 export function PostModal({ post, user, onClose, onComment, onReact }) {
   const [commentText, setCommentText] = useState("");
   const [showAllComments, setShowAllComments] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const reactionTypes = [
     { key: 'like', icon: ThumbsUp, label: 'Like' },
@@ -196,12 +198,23 @@ export function PostModal({ post, user, onClose, onComment, onReact }) {
               <MessageCircle size={18} />
               Comment
             </button>
-            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition font-medium">
+            <button 
+              onClick={() => setShowShareModal(true)}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition font-medium"
+            >
               <Share2 size={18} />
               Share
             </button>
           </div>
         </div>
+
+        {/* Share Modal */}
+        <ShareControls 
+          post={post}
+          user={user}
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+        />
       </motion.article>
     </div>
   );

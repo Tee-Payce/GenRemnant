@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LandingPage } from "./LandingPage";
 import { LibraryPage } from "./LibraryPage";
+import { DiscoverRemnants } from "./DiscoverRemnants";
 import { Hero } from "../components/Hero";
 import { PostCard } from "../components/PostCard";
 import { PostModal } from "../components/PostModal";
@@ -9,6 +10,7 @@ import { AuthModal } from "../components/AuthModal";
 import { postsAPI } from "../utils/postsApi";
 
 export function VisitPage({ user, onReact, onComment, currentPage = "landing", setCurrentPage = () => {} }) {
+  console.log('VisitPage rendered with currentPage:', currentPage);
   const [selected, setSelected] = useState(null);
   const [posts, setPosts] = useState([]);
   const [sermons, setSermons] = useState([]);
@@ -58,6 +60,25 @@ export function VisitPage({ user, onReact, onComment, currentPage = "landing", s
           user={user}
           onNavigateLibrary={handleNavigateLibrary}
         />
+      </motion.div>
+    );
+  }
+
+  // Discover Remnants Page View
+  if (currentPage === "discover-remnants") {
+    console.log('VisitPage: Rendering discover-remnants');
+    return (
+      <motion.div
+        key="discover-remnants"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.35 }}
+      >
+        <div className="p-8 bg-blue-100 rounded-lg">
+          <h1 className="text-2xl font-bold text-blue-800">DISCOVER REMNANTS TEST</h1>
+          <p>This is a test to see if discover-remnants routing works</p>
+        </div>
       </motion.div>
     );
   }
