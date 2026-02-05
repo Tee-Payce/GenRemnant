@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
+import { buildApiUrl } from "../utils/apiUrl";
 import "../styles/AuthModal.css";
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 export function AuthModal({ mode = "login", onClose, _onSwitchMode, onAuthenticate }) {
   const [isLogin, setIsLogin] = useState(mode === "login");
@@ -29,7 +28,7 @@ export function AuthModal({ mode = "login", onClose, _onSwitchMode, onAuthentica
         }
 
         // Call actual login API
-        const response = await fetch(`${API_URL}/auth/login`, {
+        const response = await fetch(buildApiUrl('/auth/login'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -70,7 +69,7 @@ export function AuthModal({ mode = "login", onClose, _onSwitchMode, onAuthentica
         }
 
         // Call actual register API
-        const response = await fetch(`${API_URL}/auth/register`, {
+        const response = await fetch(buildApiUrl('/auth/register'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
