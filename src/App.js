@@ -121,7 +121,7 @@ function AppContent() {
     setShowAuthModal(true);
   };
 
-  const addPost = (newPost) => {
+  const addPost = (_newPost) => {
     // Trigger refresh via context
     // (new posts start as pending, so they won't show immediately)
   };
@@ -176,10 +176,10 @@ function AppContent() {
             user={user}
             onComment={addComment}
             onReaction={addReaction}
-            onNavigateLibrary={(query) => {
+            onNavigateLibrary={(_query) => {
               setCurrentPage("library");
             }}
-            onSearch={(query) => console.log("Search:", query)}
+            onSearch={(_query) => console.log("Search:", _query)}
           />
         );
 
@@ -232,10 +232,10 @@ function AppContent() {
             user={user}
             onComment={addComment}
             onReaction={addReaction}
-            onNavigateLibrary={(query) => {
+            onNavigateLibrary={(_query) => {
               setCurrentPage("library");
             }}
-            onSearch={(query) => console.log("Search:", query)}
+            onSearch={(_query) => console.log("Search:", _query)}
           />
         );
     }

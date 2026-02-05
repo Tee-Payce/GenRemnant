@@ -5,8 +5,8 @@ import { reactionsAPI } from "../utils/api";
 import { getToken } from "../utils/auth";
 import { realtimeUpdates } from "../utils/realtimeUpdates";
 
-export function PostCard({ post, user, onOpen, onReact }) {
-  const [reactionCount, setReactionCount] = useState(0);
+export function PostCard({ post, user, onOpen, _onReact }) {
+  const [_reactionCount, _setReactionCount] = useState(0);
   const [userReaction, setUserReaction] = useState(null);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export function PostCard({ post, user, onOpen, onReact }) {
       try {
         const reactions = await reactionsAPI.getReactions(post.id);
         const likeCount = reactions.filter(r => r.reactionType === 'like').length;
-        setReactionCount(likeCount);
+        _setReactionCount(likeCount);
 
         const token = getToken();
         if (token) {
@@ -32,7 +32,7 @@ export function PostCard({ post, user, onOpen, onReact }) {
       if (data.reaction) {
         const reactions = Array.isArray(data.reaction) ? data.reaction : [data.reaction];
         const likeCount = reactions.filter(r => r.reactionType === 'like').length;
-        setReactionCount(likeCount);
+        _setReactionCount(likeCount);
       }
     };
 
@@ -43,7 +43,7 @@ export function PostCard({ post, user, onOpen, onReact }) {
     };
   }, [post.id]);
 
-  const handleReact = async () => {
+  const _handleReact = async () => {
     const token = getToken();
     if (!token) {
       console.log('Please log in to react');
@@ -53,11 +53,11 @@ export function PostCard({ post, user, onOpen, onReact }) {
       if (userReaction) {
         await reactionsAPI.removeReaction(post.id, token);
         setUserReaction(null);
-        setReactionCount(c => c - 1);
+        _setReactionCount(c => c - 1);
       } else {
         await reactionsAPI.addReaction(post.id, 'like', token);
         setUserReaction({ reactionType: 'like' });
-        setReactionCount(c => c + 1);
+        _setReactionCount(c => c + 1);
       }
     } catch (err) {
       console.error('Failed to add reaction:', err);
