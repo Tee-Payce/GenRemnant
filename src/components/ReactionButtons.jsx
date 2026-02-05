@@ -61,35 +61,6 @@ export function ReactionButtons({ post, user }) {
     }
   }, [showPicker]);
 
-  const fetchReactions = useCallback(async () => {
-    try {
-      const data = await reactionsAPI.getReactions(post.id);
-      setReactions(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch reactions:', error);
-      setReactions([]);
-    }
-  }, [post.id]);
-
-  const fetchUserReaction = useCallback(async () => {
-    try {
-      const token = getToken();
-      if (token) {
-        const reaction = await reactionsAPI.getUserReaction(post.id, token);
-        setUserReaction(reaction || null);
-      }
-    } catch (error) {
-      console.error('Failed to fetch user reaction:', error);
-    }
-  }, [post.id]);
-
-  useEffect(() => {
-    fetchReactions();
-    if (user) {
-      fetchUserReaction();
-    }
-  }, [post.id, user, fetchReactions, fetchUserReaction]);
-
   const handleReaction = async (reactionType) => {
     if (!user) {
       alert('Please sign in to react');
