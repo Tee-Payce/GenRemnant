@@ -32,7 +32,7 @@ function AppContent() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
   const [darkMode, setDarkMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, _setIsLoading] = useState(false);
 
   // Load published posts with comments and reactions
   const loadPublishedPosts = useCallback(async () => {

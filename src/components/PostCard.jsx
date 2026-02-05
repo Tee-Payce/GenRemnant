@@ -55,7 +55,7 @@ export function PostCard({ post, user, onOpen, onReact }) {
         setUserReaction(null);
         setReactionCount(c => c - 1);
       } else {
-        const reaction = await reactionsAPI.addReaction(post.id, 'like', token);
+        await reactionsAPI.addReaction(post.id, 'like', token);
         setUserReaction({ reactionType: 'like' });
         setReactionCount(c => c + 1);
       }
