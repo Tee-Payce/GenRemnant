@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { getToken } from "../utils/auth";
 import { reactionsAPI } from "../utils/api";
 
@@ -19,12 +19,34 @@ export function ReactionButtons({ post, user }) {
     { type: 'angry', emoji: '😠', label: 'Angry' },
   ];
 
+  const fetchReactions = useCallback(async () => {
+    try {
+      const data = await reactionsAPI.getReactions(post.id);
+      setReactions(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to fetch reactions:', error);
+      setReactions([]);
+    }
+  }, [post.id]);
+
+  const fetchUserReaction = useCallback(async () => {
+    try {
+      const token = getToken();
+      if (token) {
+        const reaction = await reactionsAPI.getUserReaction(post.id, token);
+        setUserReaction(reaction || null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user reaction:', error);
+    }
+  }, [post.id]);
+
   useEffect(() => {
     fetchReactions();
     if (user) {
       fetchUserReaction();
     }
-  }, [post.id, user]);
+  }, [post.id, user, fetchReactions, fetchUserReaction]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -39,7 +61,7 @@ export function ReactionButtons({ post, user }) {
     }
   }, [showPicker]);
 
-  const fetchReactions = async () => {
+  const fetchReactions = useCallback(async () => {
     try {
       const data = await reactionsAPI.getReactions(post.id);
       setReactions(Array.isArray(data) ? data : []);
@@ -47,9 +69,9 @@ export function ReactionButtons({ post, user }) {
       console.error('Failed to fetch reactions:', error);
       setReactions([]);
     }
-  };
+  }, [post.id]);
 
-  const fetchUserReaction = async () => {
+  const fetchUserReaction = useCallback(async () => {
     try {
       const token = getToken();
       if (token) {
@@ -59,7 +81,14 @@ export function ReactionButtons({ post, user }) {
     } catch (error) {
       console.error('Failed to fetch user reaction:', error);
     }
-  };
+  }, [post.id]);
+
+  useEffect(() => {
+    fetchReactions();
+    if (user) {
+      fetchUserReaction();
+    }
+  }, [post.id, user, fetchReactions, fetchUserReaction]);
 
   const handleReaction = async (reactionType) => {
     if (!user) {

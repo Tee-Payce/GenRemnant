@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users,
@@ -6,7 +6,7 @@ import {
   AlertCircle,
   CheckCircle,
   Trash2,
-  Edit,
+  Edit as _Edit,
   BarChart3,
   MessageSquare,
   Search,
@@ -22,7 +22,7 @@ export function AdminDashboard({ user, posts = [] }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [users, setUsers] = useState([]);
   const [pendingPosts, setPendingPosts] = useState([]);
-  const [publishedPosts, setPublishedPosts] = useState([]);
+  const [_publishedPosts, _setPublishedPosts] = useState([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
     regularUsers: 0,
@@ -41,13 +41,9 @@ export function AdminDashboard({ user, posts = [] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   const getToken = () => localStorage.getItem('token');
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
     const token = getToken();
@@ -118,7 +114,11 @@ export function AdminDashboard({ user, posts = [] }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [posts.length]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
 
   const handleApprovePost = async (postId) => {

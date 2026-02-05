@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { X, User, Phone, Instagram, Facebook, Edit, Eye, Users } from 'lucide-react';
@@ -17,27 +17,15 @@ export function UserProfileDrawer({ user, isOpen, onClose, onUpdateProfile, onNa
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && user) {
-      loadProfileData();
-    }
-  }, [isOpen, user]);
-
-  useEffect(() => {
-    if (user) {
-      loadProfileData();
-    }
-  }, [user]);
-
-  const loadProfileData = async () => {
+  const loadProfileData = useCallback(async () => {
     try {
       const token = getToken();
       if (token) {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/users/profile`, {
+        const _response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/users/profile`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (response.ok) {
-          const data = await response.json();
+        if (_response.ok) {
+          const data = await _response.json();
           setProfileData(data.user);
           setFormData(data.user);
           return;
@@ -51,7 +39,19 @@ export function UserProfileDrawer({ user, isOpen, onClose, onUpdateProfile, onNa
       setProfileData(user);
       setFormData(user);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (isOpen && user) {
+      loadProfileData();
+    }
+  }, [isOpen, user, loadProfileData]);
+
+  useEffect(() => {
+    if (user) {
+      loadProfileData();
+    }
+  }, [user, loadProfileData]);
 
   const setFormData = (data) => {
     setDisplayName(data?.displayName || '');
