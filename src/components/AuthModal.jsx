@@ -45,7 +45,7 @@ export function AuthModal({ mode = "login", onClose, _onSwitchMode, onAuthentica
         }
 
         // Save token and user data
-        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
         onAuthenticate?.(data.user);
@@ -92,7 +92,7 @@ export function AuthModal({ mode = "login", onClose, _onSwitchMode, onAuthentica
         }
 
         // Save token and user data
-        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
         onAuthenticate?.(data.user);
