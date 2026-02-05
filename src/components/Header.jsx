@@ -163,6 +163,54 @@ export function Header({
               {item.icon} {item.label}
             </button>
           ))}
+          
+          {/* Mobile Auth Buttons */}
+          {!user && (
+            <div className="mobile-auth-buttons">
+              <button
+                className="mobile-auth-btn login"
+                onClick={() => {
+                  onAuthClick("login");
+                  setIsMenuOpen(false);
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                className="mobile-auth-btn signup"
+                onClick={() => {
+                  onAuthClick("register");
+                  setIsMenuOpen(false);
+                }}
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+          
+          {/* Mobile User Actions */}
+          {user && (
+            <div className="mobile-user-actions">
+              <button
+                className="mobile-nav-item"
+                onClick={() => {
+                  setIsProfileOpen(true);
+                  setIsMenuOpen(false);
+                }}
+              >
+                👤 Profile
+              </button>
+              <button
+                className="mobile-nav-item logout"
+                onClick={() => {
+                  onLogout();
+                  setIsMenuOpen(false);
+                }}
+              >
+                🚪 Logout
+              </button>
+            </div>
+          )}
         </motion.nav>
       )}
 
